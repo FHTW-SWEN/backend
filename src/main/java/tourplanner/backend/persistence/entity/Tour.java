@@ -1,15 +1,15 @@
 package tourplanner.backend.persistence.entity;
 
 public class Tour {
-
     private Long id;
+    private Double distance;
+    private Integer estimatedTime;
+
     private String name;
     private String description;
     private String from;
     private String to;
     private String transportType;
-    private Double distance;
-    private Integer estimatedTime;
 
     public Tour() {}
 
