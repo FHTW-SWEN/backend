@@ -1,8 +1,8 @@
 package tourplanner.backend.persistence.repository;
 
 import tourplanner.backend.persistence.entity.Tour;
-
 import org.springframework.stereotype.Repository;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,7 +25,7 @@ public class TourRepository {
     }
 
     public Tour save(Tour tour) {
-        tour.setId(idCounter.getAndIncrement());
+        tour.setId(Long.valueOf(idCounter.getAndIncrement()));
         tours.add(tour);
         return tour;
     }
