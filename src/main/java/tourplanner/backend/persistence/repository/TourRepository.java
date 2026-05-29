@@ -1,4 +1,4 @@
-package tourplanner.backend.persistence.repository;
+/*package tourplanner.backend.persistence.repository;
 
 import tourplanner.backend.persistence.entity.Tour;
 import org.springframework.stereotype.Repository;
@@ -46,4 +46,13 @@ public class TourRepository {
     public boolean delete(Long id) {
         return tours.removeIf(t -> t.getId().equals(id));
     }
+}*/
+package tourplanner.backend.persistence.repository;
+
+import tourplanner.backend.persistence.entity.Tour;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface TourRepository extends JpaRepository<Tour, Long> {
 }
