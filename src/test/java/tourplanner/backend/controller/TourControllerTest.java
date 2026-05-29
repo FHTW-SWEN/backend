@@ -1,6 +1,7 @@
 package tourplanner.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import tourplanner.backend.dto.TourResponse;
 import tourplanner.backend.persistence.entity.Tour;
 import tourplanner.backend.service.TourService;
 import org.junit.jupiter.api.Test;
@@ -44,14 +45,20 @@ class TourControllerTest {
         return tour;
     }
 
+    private TourResponse sampleTourResponse() {
+        return new TourResponse(sampleTour(), 0, 0);
+    }
+
     // GET /api/tours
     @Test
     void getAllTours_returnsList() throws Exception {
-        when(tourService.getAllTours()).thenReturn(List.of(sampleTour()));
+        when(tourService.getAllTours()).thenReturn(List.of(sampleTourResponse()));
 
         mockMvc.perform(get("/api/tours"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Vienna to Salzburg"));
+                .andExpect(jsonPath("$[0].name").value("Vienna to Salzburg"))
+                .andExpect(jsonPath("$[0].popularity").value(0))
+                .andExpect(jsonPath("$[0].childFriendliness").value(0));
     }
 
     // GET /api/tours - empty list
@@ -67,11 +74,13 @@ class TourControllerTest {
     // GET /api/tours/{id}
     @Test
     void getTourById_returnsOk() throws Exception {
-        when(tourService.getTourById(1L)).thenReturn(Optional.of(sampleTour()));
+        when(tourService.getTourById(1L)).thenReturn(Optional.of(sampleTourResponse()));
 
         mockMvc.perform(get("/api/tours/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Vienna to Salzburg"));
+                .andExpect(jsonPath("$.name").value("Vienna to Salzburg"))
+                .andExpect(jsonPath("$.popularity").value(0))
+                .andExpect(jsonPath("$.childFriendliness").value(0));
     }
 
     // GET /api/tours/{id} - not found (edge case)

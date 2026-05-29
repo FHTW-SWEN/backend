@@ -38,6 +38,7 @@ public class TourService {
 }*/
 package tourplanner.backend.service;
 
+import tourplanner.backend.dto.TourResponse;
 import tourplanner.backend.persistence.entity.Tour;
 import tourplanner.backend.persistence.repository.TourRepository;
 import org.springframework.stereotype.Service;
@@ -54,12 +55,15 @@ public class TourService {
         this.tourRepository = tourRepository;
     }
 
-    public List<Tour> getAllTours() {
-        return tourRepository.findAll();
+    public List<TourResponse> getAllTours() {
+        return tourRepository.findAll().stream()
+                .map(this::toResponse)
+                .toList();
     }
 
-    public Optional<Tour> getTourById(Long id) {
-        return tourRepository.findById(id);
+    public Optional<TourResponse> getTourById(Long id) {
+        return tourRepository.findById(id)
+                .map(this::toResponse);
     }
 
     public Tour createTour(Tour tour) {
@@ -85,5 +89,9 @@ public class TourService {
         if (!tourRepository.existsById(id)) return false;
         tourRepository.deleteById(id);
         return true;
+    }
+
+    private TourResponse toResponse(Tour tour) {
+        return new TourResponse(tour, 0, 0);
     }
 }
