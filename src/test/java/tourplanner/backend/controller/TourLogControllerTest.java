@@ -47,7 +47,7 @@ class TourLogControllerTest {
     void getAllTourLogs_returnsList() throws Exception {
         when(tourLogService.getAllTourLogs()).thenReturn(List.of(sampleTourLog()));
 
-        mockMvc.perform(get("/logs"))
+        mockMvc.perform(get("/api/logs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].tourId").value(10))
                 .andExpect(jsonPath("$[0].rating").value(5));
@@ -57,7 +57,7 @@ class TourLogControllerTest {
     void getTourLogsByTourId_returnsFilteredList() throws Exception {
         when(tourLogService.getTourLogsByTourId(10L)).thenReturn(List.of(sampleTourLog()));
 
-        mockMvc.perform(get("/logs").param("tourId", "10"))
+        mockMvc.perform(get("/api/logs").param("tourId", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].tourId").value(10));
     }
@@ -66,7 +66,7 @@ class TourLogControllerTest {
     void getTourLogById_returnsOk() throws Exception {
         when(tourLogService.getTourLogById(1L)).thenReturn(Optional.of(sampleTourLog()));
 
-        mockMvc.perform(get("/logs/1"))
+        mockMvc.perform(get("/api/logs/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.comment").value("Nice weather and easy ride"));
     }
@@ -75,7 +75,7 @@ class TourLogControllerTest {
     void getTourLogById_returnsNotFound() throws Exception {
         when(tourLogService.getTourLogById(999L)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/logs/999"))
+        mockMvc.perform(get("/api/logs/999"))
                 .andExpect(status().isNotFound());
     }
 
@@ -83,7 +83,7 @@ class TourLogControllerTest {
     void createTourLog_returnsCreated() throws Exception {
         when(tourLogService.createTourLog(any())).thenReturn(sampleTourLog());
 
-        mockMvc.perform(post("/logs")
+        mockMvc.perform(post("/api/logs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(sampleTourLog())))
                 .andExpect(status().isCreated())
@@ -94,7 +94,7 @@ class TourLogControllerTest {
     void updateTourLog_returnsOk() throws Exception {
         when(tourLogService.updateTourLog(eq(1L), any())).thenReturn(Optional.of(sampleTourLog()));
 
-        mockMvc.perform(put("/logs/1")
+        mockMvc.perform(put("/api/logs/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(sampleTourLog())))
                 .andExpect(status().isOk())
@@ -105,7 +105,7 @@ class TourLogControllerTest {
     void updateTourLog_returnsNotFound() throws Exception {
         when(tourLogService.updateTourLog(eq(999L), any())).thenReturn(Optional.empty());
 
-        mockMvc.perform(put("/logs/999")
+        mockMvc.perform(put("/api/logs/999")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(sampleTourLog())))
                 .andExpect(status().isNotFound());
@@ -115,7 +115,7 @@ class TourLogControllerTest {
     void deleteTourLog_returnsNoContent() throws Exception {
         when(tourLogService.deleteTourLog(1L)).thenReturn(true);
 
-        mockMvc.perform(delete("/logs/1"))
+        mockMvc.perform(delete("/api/logs/1"))
                 .andExpect(status().isNoContent());
     }
 
@@ -123,7 +123,7 @@ class TourLogControllerTest {
     void deleteTourLog_returnsNotFound() throws Exception {
         when(tourLogService.deleteTourLog(999L)).thenReturn(false);
 
-        mockMvc.perform(delete("/logs/999"))
+        mockMvc.perform(delete("/api/logs/999"))
                 .andExpect(status().isNotFound());
     }
 }
