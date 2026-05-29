@@ -40,6 +40,7 @@ package tourplanner.backend.service;
 
 import tourplanner.backend.dto.TourResponse;
 import tourplanner.backend.persistence.entity.Tour;
+import tourplanner.backend.persistence.entity.TourLog;
 import tourplanner.backend.persistence.repository.TourLogRepository;
 import tourplanner.backend.persistence.repository.TourRepository;
 import org.springframework.stereotype.Service;
@@ -96,6 +97,55 @@ public class TourService {
 
     private TourResponse toResponse(Tour tour) {
         int popularity = Math.toIntExact(tourLogRepository.countByTourId(tour.getId()));
-        return new TourResponse(tour, popularity, 0);
+        int childFriendliness = calculateChildFriendliness(tour.getId());
+        return new TourResponse(tour, popularity, childFriendliness);
+    }
+
+    private int calculateChildFriendliness(Long tourId) {
+        List<TourLog> logs = tourLogRepository.findByTourId(tourId);
+        if (logs.isEmpty()) {
+            return 0;
+        }
+
+        double averageScore = logs.stream()
+                .mapToDouble(this::calculateLogChildFriendliness)
+                .average()
+                .orElse(0);
+        return (int) Math.round(averageScore);
+    }
+
+    private double calculateLogChildFriendliness(TourLog log) {
+        return (scoreDifficulty(log.getDifficulty())
+                + scoreTotalTime(log.getTotalTime())
+                + scoreTotalDistance(log.getTotalDistance())) / 3.0;
+    }
+
+    private int scoreDifficulty(Integer difficulty) {
+        if (difficulty == null) {
+            return 1;
+        }
+        return Math.max(1, Math.min(5, 6 - difficulty));
+    }
+
+    private int scoreTotalTime(Integer totalTime) {
+        if (totalTime == null) {
+            return 1;
+        }
+        if (totalTime <= 60) return 5;
+        if (totalTime <= 120) return 4;
+        if (totalTime <= 180) return 3;
+        if (totalTime <= 240) return 2;
+        return 1;
+    }
+
+    private int scoreTotalDistance(Double totalDistance) {
+        if (totalDistance == null) {
+            return 1;
+        }
+        if (totalDistance <= 3) return 5;
+        if (totalDistance <= 5) return 4;
+        if (totalDistance <= 10) return 3;
+        if (totalDistance <= 15) return 2;
+        return 1;
     }
 }
