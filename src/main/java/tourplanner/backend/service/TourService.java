@@ -40,6 +40,7 @@ package tourplanner.backend.service;
 
 import tourplanner.backend.dto.TourResponse;
 import tourplanner.backend.persistence.entity.Tour;
+import tourplanner.backend.persistence.repository.TourLogRepository;
 import tourplanner.backend.persistence.repository.TourRepository;
 import org.springframework.stereotype.Service;
 
@@ -50,9 +51,11 @@ import java.util.Optional;
 public class TourService {
 
     private final TourRepository tourRepository;
+    private final TourLogRepository tourLogRepository;
 
-    public TourService(TourRepository tourRepository) {
+    public TourService(TourRepository tourRepository, TourLogRepository tourLogRepository) {
         this.tourRepository = tourRepository;
+        this.tourLogRepository = tourLogRepository;
     }
 
     public List<TourResponse> getAllTours() {
@@ -92,6 +95,7 @@ public class TourService {
     }
 
     private TourResponse toResponse(Tour tour) {
-        return new TourResponse(tour, 0, 0);
+        int popularity = Math.toIntExact(tourLogRepository.countByTourId(tour.getId()));
+        return new TourResponse(tour, popularity, 0);
     }
 }

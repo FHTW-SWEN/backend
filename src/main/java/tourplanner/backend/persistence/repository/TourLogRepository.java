@@ -63,4 +63,6 @@ import java.util.List;
 @Repository
 public interface TourLogRepository extends JpaRepository<TourLog, Long> {
     List<TourLog> findByTourId(Long tourId);
+
+    long countByTourId(Long tourId);
 }
