@@ -1,4 +1,4 @@
-package tourplanner.backend.controller;
+/*package tourplanner.backend.controller;
 
 import tourplanner.backend.persistence.entity.Tour;
 import tourplanner.backend.dto.TourResponse;
@@ -49,6 +49,69 @@ public class TourController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTour(@PathVariable Long id) {
         if (tourService.deleteTour(id)) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+}*/
+package tourplanner.backend.controller;
+
+import tourplanner.backend.dto.TourResponse;
+import tourplanner.backend.persistence.entity.Tour;
+import tourplanner.backend.service.TourService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/tours")
+@CrossOrigin(origins = "http://localhost:4200")
+public class TourController {
+
+    private final TourService tourService;
+
+    public TourController(TourService tourService) {
+        this.tourService = tourService;
+    }
+
+    @GetMapping
+    public List<TourResponse> getAllTours(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        return tourService.getAllToursByUser(userId);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TourResponse> getTourById(@PathVariable Long id, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        return tourService.getTourByIdAndUser(id, userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<Tour> createTour(@RequestBody Tour tour, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        tour.setUserId(userId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(tourService.createTour(tour));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Tour> updateTour(@PathVariable Long id, @RequestBody Tour tour,
+                                           HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        return tourService.updateTourForUser(id, tour, userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTour(@PathVariable Long id, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        if (tourService.deleteTourForUser(id, userId)) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
