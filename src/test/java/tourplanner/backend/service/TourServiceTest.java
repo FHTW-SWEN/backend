@@ -19,7 +19,8 @@ class TourServiceTest {
 
     private final TourRepository tourRepository = mock(TourRepository.class);
     private final TourLogRepository tourLogRepository = mock(TourLogRepository.class);
-    private final TourService tourService = new TourService(tourRepository, tourLogRepository);
+    private final RouteService routeService = mock(RouteService.class);
+    private final TourService tourService = new TourService(tourRepository, tourLogRepository, routeService);
 
     @Test
     void getAllTours_includesPopularityFromTourLogCount() {
