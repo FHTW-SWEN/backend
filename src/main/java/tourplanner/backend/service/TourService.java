@@ -41,11 +41,15 @@ package tourplanner.backend.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
+import tourplanner.backend.dto.TourResponse;
 import tourplanner.backend.dto.ors.RouteInfo;
 import tourplanner.backend.persistence.entity.Tour;
+import tourplanner.backend.persistence.entity.TourLog;
+import tourplanner.backend.persistence.repository.TourLogRepository;
 import tourplanner.backend.persistence.repository.TourRepository;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -61,21 +65,42 @@ public class TourService {
     private static final Logger log = LogManager.getLogger(TourService.class);
 
     private final TourRepository tourRepository;
+    private final TourLogRepository tourLogRepository;
     private final RouteService routeService;
 
-    public TourService(TourRepository tourRepository, RouteService routeService) {
+    public TourService(TourRepository tourRepository, TourLogRepository tourLogRepository, RouteService routeService) {
         this.tourRepository = tourRepository;
+        this.tourLogRepository = tourLogRepository;
         this.routeService = routeService;
     }
 
-    public List<Tour> getAllTours() {
+    public List<TourResponse> getAllTours() {
         log.debug("Lade alle Tours aus der Datenbank");
-        return tourRepository.findAll();
+        return tourRepository.findAll().stream()
+                .map(this::toResponse)
+                .toList();
     }
 
-    public Optional<Tour> getTourById(Long id) {
+    public Optional<TourResponse> getTourById(Long id) {
         log.debug("Suche Tour mit ID: {}", id);
-        return tourRepository.findById(id);
+        return tourRepository.findById(id).map(this::toResponse);
+    }
+
+    public List<TourResponse> searchTours(String query) {
+        String normalizedQuery = normalize(query);
+        if (normalizedQuery.isBlank()) {
+            return getAllTours();
+        }
+
+        return tourRepository.findAll().stream()
+                .map(tour -> {
+                    List<TourLog> logs = tourLogRepository.findByTourId(tour.getId());
+                    TourResponse response = toResponse(tour, logs);
+                    return new SearchCandidate(response, buildSearchText(response, logs));
+                })
+                .filter(candidate -> candidate.searchText().contains(normalizedQuery))
+                .map(SearchCandidate::tour)
+                .toList();
     }
 
     /**
@@ -147,4 +172,94 @@ public class TourService {
         }
         return false;
     }
+
+    private TourResponse toResponse(Tour tour) {
+        return toResponse(tour, tourLogRepository.findByTourId(tour.getId()));
+    }
+
+    private TourResponse toResponse(Tour tour, List<TourLog> logs) {
+        int popularity = Math.toIntExact(tourLogRepository.countByTourId(tour.getId()));
+        int childFriendliness = calculateChildFriendliness(logs);
+        return new TourResponse(tour, popularity, childFriendliness);
+    }
+
+    private int calculateChildFriendliness(List<TourLog> logs) {
+        if (logs.isEmpty()) {
+            return 0;
+        }
+
+        double average = logs.stream()
+                .mapToInt(this::calculateLogChildFriendliness)
+                .average()
+                .orElse(0);
+        return (int) Math.round(average);
+    }
+
+    private int calculateLogChildFriendliness(TourLog log) {
+        return (difficultyScore(log.getDifficulty())
+                + timeScore(log.getTotalTime())
+                + distanceScore(log.getTotalDistance())) / 3;
+    }
+
+    private int difficultyScore(Integer difficulty) {
+        if (difficulty == null) return 0;
+        return Math.max(1, 6 - difficulty);
+    }
+
+    private int timeScore(Integer totalTime) {
+        if (totalTime == null) return 0;
+        if (totalTime <= 60) return 5;
+        if (totalTime <= 120) return 4;
+        if (totalTime <= 180) return 3;
+        if (totalTime <= 240) return 2;
+        return 1;
+    }
+
+    private int distanceScore(Double totalDistance) {
+        if (totalDistance == null) return 0;
+        if (totalDistance <= 3) return 5;
+        if (totalDistance <= 5) return 4;
+        if (totalDistance <= 10) return 3;
+        if (totalDistance <= 15) return 2;
+        return 1;
+    }
+
+    private String buildSearchText(TourResponse tour, List<TourLog> logs) {
+        StringBuilder text = new StringBuilder();
+        append(text, tour.getName());
+        append(text, tour.getDescription());
+        append(text, tour.getFrom());
+        append(text, tour.getTo());
+        append(text, tour.getTransportType());
+        append(text, tour.getDistance());
+        append(text, tour.getEstimatedTime());
+        append(text, tour.getRouteCoordinates());
+        append(text, tour.getImageUrl());
+        append(text, tour.getPopularity());
+        append(text, tour.getChildFriendliness());
+        append(text, "popularity:" + tour.getPopularity());
+        append(text, "childfriendliness:" + tour.getChildFriendliness());
+
+        for (TourLog log : logs) {
+            append(text, log.getDateTime());
+            append(text, log.getComment());
+            append(text, log.getDifficulty());
+            append(text, log.getTotalDistance());
+            append(text, log.getTotalTime());
+            append(text, log.getRating());
+        }
+        return normalize(text.toString());
+    }
+
+    private void append(StringBuilder text, Object value) {
+        if (value != null) {
+            text.append(' ').append(value);
+        }
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private record SearchCandidate(TourResponse tour, String searchText) {}
 }

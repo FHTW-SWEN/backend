@@ -71,6 +71,16 @@ class TourControllerTest {
                 .andExpect(jsonPath("$").isEmpty());
     }
 
+    // GET /api/tours/search?q=...
+    @Test
+    void searchTours_returnsMatchingList() throws Exception {
+        when(tourService.searchTours("salzburg")).thenReturn(List.of(sampleTourResponse()));
+
+        mockMvc.perform(get("/api/tours/search").param("q", "salzburg"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Vienna to Salzburg"));
+    }
+
     // GET /api/tours/{id}
     @Test
     void getTourById_returnsOk() throws Exception {

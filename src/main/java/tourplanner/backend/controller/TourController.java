@@ -26,6 +26,11 @@ public class TourController {
         return tourService.getAllTours();
     }
 
+    @GetMapping("/search")
+    public List<TourResponse> searchTours(@RequestParam(required = false) String q) {
+        return tourService.searchTours(q);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TourResponse> getTourById(@PathVariable Long id) {
         return tourService.getTourById(id)
@@ -61,6 +66,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import tourplanner.backend.dto.TourResponse;
 import tourplanner.backend.persistence.entity.Tour;
 import tourplanner.backend.service.TourService;
 
@@ -80,13 +86,19 @@ public class TourController {
     }
 
     @GetMapping
-    public List<Tour> getAllTours() {
+    public List<TourResponse> getAllTours() {
         log.debug("GET /api/tours");
         return tourService.getAllTours();
     }
 
+    @GetMapping("/search")
+    public List<TourResponse> searchTours(@RequestParam(required = false) String q) {
+        log.debug("GET /api/tours/search?q={}", q);
+        return tourService.searchTours(q);
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<Tour> getTourById(@PathVariable Long id) {
+    public ResponseEntity<TourResponse> getTourById(@PathVariable Long id) {
         log.debug("GET /api/tours/{}", id);
         return tourService.getTourById(id)
                 .map(ResponseEntity::ok)
