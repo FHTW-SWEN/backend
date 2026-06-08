@@ -26,6 +26,11 @@ public class TourController {
         return tourService.getAllTours();
     }
 
+    @GetMapping("/search")
+    public List<TourResponse> searchTours(@RequestParam(required = false) String q) {
+        return tourService.searchTours(q);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TourResponse> getTourById(@PathVariable Long id) {
         return tourService.getTourById(id)

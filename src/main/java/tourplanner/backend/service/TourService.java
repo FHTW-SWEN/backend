@@ -46,6 +46,7 @@ import tourplanner.backend.persistence.repository.TourRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -68,6 +69,23 @@ public class TourService {
     public Optional<TourResponse> getTourById(Long id) {
         return tourRepository.findById(id)
                 .map(this::toResponse);
+    }
+
+    public List<TourResponse> searchTours(String query) {
+        String normalizedQuery = normalize(query);
+        if (normalizedQuery.isBlank()) {
+            return getAllTours();
+        }
+
+        return tourRepository.findAll().stream()
+                .map(tour -> {
+                    List<TourLog> logs = tourLogRepository.findByTourId(tour.getId());
+                    TourResponse response = toResponse(tour, logs);
+                    return new SearchCandidate(response, buildSearchText(response, logs));
+                })
+                .filter(candidate -> candidate.searchText().contains(normalizedQuery))
+                .map(SearchCandidate::tour)
+                .toList();
     }
 
     public Tour createTour(Tour tour) {
@@ -97,12 +115,17 @@ public class TourService {
 
     private TourResponse toResponse(Tour tour) {
         int popularity = Math.toIntExact(tourLogRepository.countByTourId(tour.getId()));
-        int childFriendliness = calculateChildFriendliness(tour.getId());
+        int childFriendliness = calculateChildFriendliness(tourLogRepository.findByTourId(tour.getId()));
         return new TourResponse(tour, popularity, childFriendliness);
     }
 
-    private int calculateChildFriendliness(Long tourId) {
-        List<TourLog> logs = tourLogRepository.findByTourId(tourId);
+    private TourResponse toResponse(Tour tour, List<TourLog> logs) {
+        int popularity = Math.toIntExact(tourLogRepository.countByTourId(tour.getId()));
+        int childFriendliness = calculateChildFriendliness(logs);
+        return new TourResponse(tour, popularity, childFriendliness);
+    }
+
+    private int calculateChildFriendliness(List<TourLog> logs) {
         if (logs.isEmpty()) {
             return 0;
         }
@@ -148,4 +171,42 @@ public class TourService {
         if (totalDistance <= 15) return 2;
         return 1;
     }
+
+    private String buildSearchText(TourResponse tour, List<TourLog> logs) {
+        StringBuilder text = new StringBuilder();
+        append(text, tour.getName());
+        append(text, tour.getDescription());
+        append(text, tour.getFrom());
+        append(text, tour.getTo());
+        append(text, tour.getTransportType());
+        append(text, tour.getDistance());
+        append(text, tour.getEstimatedTime());
+        append(text, tour.getImageUrl());
+        append(text, tour.getPopularity());
+        append(text, tour.getChildFriendliness());
+        append(text, "popularity:" + tour.getPopularity());
+        append(text, "childfriendliness:" + tour.getChildFriendliness());
+
+        for (TourLog log : logs) {
+            append(text, log.getDateTime());
+            append(text, log.getComment());
+            append(text, log.getDifficulty());
+            append(text, log.getTotalDistance());
+            append(text, log.getTotalTime());
+            append(text, log.getRating());
+        }
+        return normalize(text.toString());
+    }
+
+    private void append(StringBuilder text, Object value) {
+        if (value != null) {
+            text.append(' ').append(value);
+        }
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private record SearchCandidate(TourResponse tour, String searchText) {}
 }
