@@ -49,13 +49,17 @@ public class TourRepository {
 }*/
 package tourplanner.backend.persistence.repository;
 
-import tourplanner.backend.persistence.entity.Tour;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import tourplanner.backend.persistence.entity.Tour;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * JPA Repository für Tours.
+ * Spring Data JPA generiert automatisch alle Standard-CRUD-Methoden.
+ */
 @Repository
 public interface TourRepository extends JpaRepository<Tour, Long> {
     List<Tour> findByUserId(Long userId);

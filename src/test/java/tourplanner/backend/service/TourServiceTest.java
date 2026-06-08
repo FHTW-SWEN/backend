@@ -19,7 +19,8 @@ class TourServiceTest {
 
     private final TourRepository tourRepository = mock(TourRepository.class);
     private final TourLogRepository tourLogRepository = mock(TourLogRepository.class);
-    private final TourService tourService = new TourService(tourRepository, tourLogRepository);
+    private final RouteService routeService = mock(RouteService.class);
+    private final TourService tourService = new TourService(tourRepository, tourLogRepository, routeService);
 
     @Test
     void getAllTours_includesPopularityFromTourLogCount() {
@@ -94,6 +95,72 @@ class TourServiceTest {
         assertEquals(3, response.get().getChildFriendliness());
     }
 
+    @Test
+    void searchTours_matchesTourFields() {
+        Tour matchingTour = sampleTour(1L);
+        Tour otherTour = sampleTour(2L);
+        otherTour.setName("City Walk");
+        otherTour.setTo("Graz");
+        when(tourRepository.findAll()).thenReturn(List.of(matchingTour, otherTour));
+        when(tourLogRepository.countByTourId(1L)).thenReturn(0L);
+        when(tourLogRepository.countByTourId(2L)).thenReturn(0L);
+        when(tourLogRepository.findByTourId(1L)).thenReturn(List.of());
+        when(tourLogRepository.findByTourId(2L)).thenReturn(List.of());
+
+        List<TourResponse> results = tourService.searchTours("salzburg");
+
+        assertEquals(1, results.size());
+        assertEquals(1L, results.get(0).getId());
+    }
+
+    @Test
+    void searchTours_matchesTourLogFields() {
+        Tour matchingTour = sampleTour(1L);
+        Tour otherTour = sampleTour(2L);
+        when(tourRepository.findAll()).thenReturn(List.of(matchingTour, otherTour));
+        when(tourLogRepository.countByTourId(1L)).thenReturn(1L);
+        when(tourLogRepository.countByTourId(2L)).thenReturn(0L);
+        when(tourLogRepository.findByTourId(1L))
+                .thenReturn(List.of(sampleTourLog(1L, 2, 90, 4.0, "Great forest route")));
+        when(tourLogRepository.findByTourId(2L)).thenReturn(List.of());
+
+        List<TourResponse> results = tourService.searchTours("forest");
+
+        assertEquals(1, results.size());
+        assertEquals(1L, results.get(0).getId());
+    }
+
+    @Test
+    void searchTours_matchesComputedAttributes() {
+        Tour matchingTour = sampleTour(1L);
+        Tour otherTour = sampleTour(2L);
+        when(tourRepository.findAll()).thenReturn(List.of(matchingTour, otherTour));
+        when(tourLogRepository.countByTourId(1L)).thenReturn(7L);
+        when(tourLogRepository.countByTourId(2L)).thenReturn(0L);
+        when(tourLogRepository.findByTourId(1L)).thenReturn(List.of());
+        when(tourLogRepository.findByTourId(2L)).thenReturn(List.of());
+
+        List<TourResponse> results = tourService.searchTours("popularity:7");
+
+        assertEquals(1, results.size());
+        assertEquals(7, results.get(0).getPopularity());
+    }
+
+    @Test
+    void searchTours_returnsAllToursForBlankQuery() {
+        Tour firstTour = sampleTour(1L);
+        Tour secondTour = sampleTour(2L);
+        when(tourRepository.findAll()).thenReturn(List.of(firstTour, secondTour));
+        when(tourLogRepository.countByTourId(1L)).thenReturn(0L);
+        when(tourLogRepository.countByTourId(2L)).thenReturn(0L);
+        when(tourLogRepository.findByTourId(1L)).thenReturn(List.of());
+        when(tourLogRepository.findByTourId(2L)).thenReturn(List.of());
+
+        List<TourResponse> results = tourService.searchTours("   ");
+
+        assertEquals(2, results.size());
+    }
+
     private Tour sampleTour(Long id) {
         Tour tour = new Tour();
         tour.setId(id);
@@ -108,8 +175,13 @@ class TourServiceTest {
     }
 
     private TourLog sampleTourLog(Long tourId, Integer difficulty, Integer totalTime, Double totalDistance) {
+        return sampleTourLog(tourId, difficulty, totalTime, totalDistance, null);
+    }
+
+    private TourLog sampleTourLog(Long tourId, Integer difficulty, Integer totalTime, Double totalDistance, String comment) {
         TourLog tourLog = new TourLog();
         tourLog.setTourId(tourId);
+        tourLog.setComment(comment);
         tourLog.setDifficulty(difficulty);
         tourLog.setTotalTime(totalTime);
         tourLog.setTotalDistance(totalDistance);

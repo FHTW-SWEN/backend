@@ -31,15 +31,15 @@ CREATE TABLE IF NOT EXISTS tours (
                                      id              BIGSERIAL       PRIMARY KEY,
                                      user_id         BIGINT,
                                      name            VARCHAR(255)    NOT NULL,
-                                     description     TEXT,
-                                     from_location   VARCHAR(255)    NOT NULL,
-                                     to_location     VARCHAR(255)    NOT NULL,
-                                     transport_type  VARCHAR(50)     NOT NULL,
-                                     distance        DOUBLE PRECISION,
-                                     estimated_time  INTEGER,
-                                     image_url       VARCHAR(500),
-                                     created_at      TIMESTAMP       NOT NULL DEFAULT NOW()
-);
+    description     TEXT,
+    from_location   VARCHAR(255)    NOT NULL,
+    to_location     VARCHAR(255)    NOT NULL,
+    transport_type  VARCHAR(50)     NOT NULL,
+    distance        DOUBLE PRECISION,
+    estimated_time  INTEGER,
+    image_url       VARCHAR(500),
+    created_at      TIMESTAMP       NOT NULL DEFAULT NOW()
+    );
 
 -- -------------------------------------------------------------
 -- 3. TOUR LOGS
