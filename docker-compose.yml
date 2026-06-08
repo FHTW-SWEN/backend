@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: tourplanner-db
+    environment:
+      POSTGRES_DB: tourplanner
+      POSTGRES_USER: tourplanner
+      POSTGRES_PASSWORD: tourplanner
+    ports:
+      - "5433:5432"
+    volumes:
+      - tourplanner-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tourplanner -d tourplanner"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  tourplanner-data:
