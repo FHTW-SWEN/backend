@@ -1,6 +1,7 @@
 /*package tourplanner.backend.controller;
 
 import tourplanner.backend.persistence.entity.Tour;
+import tourplanner.backend.dto.TourResponse;
 import tourplanner.backend.service.TourService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/tours")
+@RequestMapping("/api/tours")
+@CrossOrigin(origins = "http://localhost:4200")
+//@RequestMapping("/tours")
 public class TourController {
 
     private final TourService tourService;
@@ -19,12 +22,12 @@ public class TourController {
     }
 
     @GetMapping
-    public List<Tour> getAllTours() {
+    public List<TourResponse> getAllTours() {
         return tourService.getAllTours();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Tour> getTourById(@PathVariable Long id) {
+    public ResponseEntity<TourResponse> getTourById(@PathVariable Long id) {
         return tourService.getTourById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
