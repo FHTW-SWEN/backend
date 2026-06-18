@@ -1,5 +1,7 @@
 /*package tourplanner.backend.service;
 
+<<<<<<< HEAD
+=======
 import tourplanner.backend.persistence.entity.Tour;
 import tourplanner.backend.persistence.repository.TourRepository;
 import org.springframework.stereotype.Service;
@@ -52,13 +54,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-/**
- * Business-Layer Service für Tour-Operationen.
- *
- * Beim Erstellen einer Tour wird automatisch ORS aufgerufen,
- * um Distanz, Zeit und Routenkoordinaten zu berechnen.
- * Der User gibt nur name, description, from, to, transportType an.
- */
 @Service
 public class TourService {
 
@@ -68,31 +63,32 @@ public class TourService {
     private final TourLogRepository tourLogRepository;
     private final RouteService routeService;
 
-    public TourService(TourRepository tourRepository, TourLogRepository tourLogRepository, RouteService routeService) {
+    public TourService(TourRepository tourRepository, TourLogRepository tourLogRepository,
+                       RouteService routeService) {
         this.tourRepository = tourRepository;
         this.tourLogRepository = tourLogRepository;
         this.routeService = routeService;
     }
 
-    public List<TourResponse> getAllTours() {
-        log.debug("Lade alle Tours aus der Datenbank");
-        return tourRepository.findAll().stream()
+    public List<TourResponse> getAllToursByUser(Long userId) {
+        log.debug("Lade alle Tours für userId={}", userId);
+        return tourRepository.findByUserId(userId).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
-    public Optional<TourResponse> getTourById(Long id) {
-        log.debug("Suche Tour mit ID: {}", id);
-        return tourRepository.findById(id).map(this::toResponse);
+    public Optional<TourResponse> getTourByIdAndUser(Long id, Long userId) {
+        log.debug("Suche Tour id={} für userId={}", id, userId);
+        return tourRepository.findByIdAndUserId(id, userId).map(this::toResponse);
     }
 
-    public List<TourResponse> searchTours(String query) {
+    public List<TourResponse> searchTours(String query, Long userId) {
         String normalizedQuery = normalize(query);
         if (normalizedQuery.isBlank()) {
-            return getAllTours();
+            return getAllToursByUser(userId);
         }
 
-        return tourRepository.findAll().stream()
+        return tourRepository.findByUserId(userId).stream()
                 .map(tour -> {
                     List<TourLog> logs = tourLogRepository.findByTourId(tour.getId());
                     TourResponse response = toResponse(tour, logs);
@@ -106,37 +102,33 @@ public class TourService {
     /**
      * Erstellt eine neue Tour.
      * ORS wird aufgerufen um distance, estimatedTime und routeCoordinates zu befüllen.
-     * Diese Felder vom Client werden ignoriert und durch ORS-Daten ersetzt.
      */
     public Tour createTour(Tour tour) {
-        log.info("Erstelle neue Tour: {} ({} -> {})", tour.getName(), tour.getFrom(), tour.getTo());
+        log.info("Erstelle neue Tour: {} ({} -> {}) für userId={}",
+                tour.getName(), tour.getFrom(), tour.getTo(), tour.getUserId());
 
-        // ORS aufrufen → Distanz, Zeit und Routenkoordinaten holen
+        tour.setId(null);
+
         RouteInfo routeInfo = routeService.calculateRoute(
-                tour.getFrom(),
-                tour.getTo(),
-                tour.getTransportType()
+                tour.getFrom(), tour.getTo(), tour.getTransportType()
         );
-
-        // ORS-Ergebnisse in die Tour schreiben
         tour.setDistance(routeInfo.getDistanceKm());
         tour.setEstimatedTime(routeInfo.getEstimatedTimeMinutes());
         tour.setRouteCoordinates(routeInfo.getRouteCoordinatesJson());
 
         Tour saved = tourRepository.save(tour);
-        log.info("Tour gespeichert mit ID: {}, Distanz: {}km, Zeit: {}min",
-                saved.getId(), saved.getDistance(), saved.getEstimatedTime());
+        log.info("Tour gespeichert: id={}, {}km, {}min", saved.getId(), saved.getDistance(), saved.getEstimatedTime());
         return saved;
     }
 
     /**
-     * Aktualisiert eine bestehende Tour.
-     * Falls from, to oder transportType geändert wurden, wird ORS erneut aufgerufen.
+     * Aktualisiert eine Tour — nur wenn sie dem User gehört.
+     * ORS wird erneut aufgerufen falls from/to/transportType geändert wurden.
      */
-    public Optional<Tour> updateTour(Long id, Tour updated) {
-        log.info("Aktualisiere Tour mit ID: {}", id);
+    public Optional<Tour> updateTourForUser(Long id, Tour updated, Long userId) {
+        log.info("Aktualisiere Tour id={} für userId={}", id, userId);
 
-        return tourRepository.findById(id).map(existing -> {
+        return tourRepository.findByIdAndUserId(id, userId).map(existing -> {
             boolean routeChanged = !existing.getFrom().equals(updated.getFrom())
                     || !existing.getTo().equals(updated.getTo())
                     || !existing.getTransportType().equals(updated.getTransportType());
@@ -149,11 +141,9 @@ public class TourService {
             existing.setImageUrl(updated.getImageUrl());
 
             if (routeChanged) {
-                log.info("Route hat sich geändert, rufe ORS erneut auf");
+                log.info("Route geändert, rufe ORS erneut auf");
                 RouteInfo routeInfo = routeService.calculateRoute(
-                        updated.getFrom(),
-                        updated.getTo(),
-                        updated.getTransportType()
+                        updated.getFrom(), updated.getTo(), updated.getTransportType()
                 );
                 existing.setDistance(routeInfo.getDistanceKm());
                 existing.setEstimatedTime(routeInfo.getEstimatedTimeMinutes());
@@ -164,14 +154,15 @@ public class TourService {
         });
     }
 
-    public boolean deleteTour(Long id) {
-        log.info("Lösche Tour mit ID: {}", id);
-        if (tourRepository.existsById(id)) {
-            tourRepository.deleteById(id);
+    public boolean deleteTourForUser(Long id, Long userId) {
+        log.info("Lösche Tour id={} für userId={}", id, userId);
+        return tourRepository.findByIdAndUserId(id, userId).map(tour -> {
+            tourRepository.delete(tour);
             return true;
-        }
-        return false;
+        }).orElse(false);
     }
+
+    // --- Helper ---
 
     private TourResponse toResponse(Tour tour) {
         return toResponse(tour, tourLogRepository.findByTourId(tour.getId()));
@@ -184,30 +175,27 @@ public class TourService {
     }
 
     private int calculateChildFriendliness(List<TourLog> logs) {
-        if (logs.isEmpty()) {
-            return 0;
-        }
-
+        if (logs.isEmpty()) return 0;
         double average = logs.stream()
-                .mapToInt(this::calculateLogChildFriendliness)
+                .mapToDouble(this::calculateLogChildFriendliness)
                 .average()
                 .orElse(0);
         return (int) Math.round(average);
     }
 
-    private int calculateLogChildFriendliness(TourLog log) {
-        return (difficultyScore(log.getDifficulty())
-                + timeScore(log.getTotalTime())
-                + distanceScore(log.getTotalDistance())) / 3;
+    private double calculateLogChildFriendliness(TourLog log) {
+        return (scoreDifficulty(log.getDifficulty())
+                + scoreTotalTime(log.getTotalTime())
+                + scoreTotalDistance(log.getTotalDistance())) / 3.0;
     }
 
-    private int difficultyScore(Integer difficulty) {
-        if (difficulty == null) return 0;
-        return Math.max(1, 6 - difficulty);
+    private int scoreDifficulty(Integer difficulty) {
+        if (difficulty == null) return 1;
+        return Math.max(1, Math.min(5, 6 - difficulty));
     }
 
-    private int timeScore(Integer totalTime) {
-        if (totalTime == null) return 0;
+    private int scoreTotalTime(Integer totalTime) {
+        if (totalTime == null) return 1;
         if (totalTime <= 60) return 5;
         if (totalTime <= 120) return 4;
         if (totalTime <= 180) return 3;
@@ -215,8 +203,8 @@ public class TourService {
         return 1;
     }
 
-    private int distanceScore(Double totalDistance) {
-        if (totalDistance == null) return 0;
+    private int scoreTotalDistance(Double totalDistance) {
+        if (totalDistance == null) return 1;
         if (totalDistance <= 3) return 5;
         if (totalDistance <= 5) return 4;
         if (totalDistance <= 10) return 3;
@@ -235,26 +223,22 @@ public class TourService {
         append(text, tour.getEstimatedTime());
         append(text, tour.getRouteCoordinates());
         append(text, tour.getImageUrl());
-        append(text, tour.getPopularity());
-        append(text, tour.getChildFriendliness());
         append(text, "popularity:" + tour.getPopularity());
         append(text, "childfriendliness:" + tour.getChildFriendliness());
 
-        for (TourLog log : logs) {
-            append(text, log.getDateTime());
-            append(text, log.getComment());
-            append(text, log.getDifficulty());
-            append(text, log.getTotalDistance());
-            append(text, log.getTotalTime());
-            append(text, log.getRating());
+        for (TourLog l : logs) {
+            append(text, l.getDateTime());
+            append(text, l.getComment());
+            append(text, l.getDifficulty());
+            append(text, l.getTotalDistance());
+            append(text, l.getTotalTime());
+            append(text, l.getRating());
         }
         return normalize(text.toString());
     }
 
     private void append(StringBuilder text, Object value) {
-        if (value != null) {
-            text.append(' ').append(value);
-        }
+        if (value != null) text.append(' ').append(value);
     }
 
     private String normalize(String value) {

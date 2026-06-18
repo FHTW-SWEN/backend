@@ -61,6 +61,7 @@ public class TourController {
 }*/
 package tourplanner.backend.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -86,29 +87,36 @@ public class TourController {
     }
 
     @GetMapping
-    public List<TourResponse> getAllTours() {
-        log.debug("GET /api/tours");
-        return tourService.getAllTours();
+    public List<TourResponse> getAllTours(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        log.debug("GET /api/tours - userId={}", userId);
+        return tourService.getAllToursByUser(userId);
     }
 
     @GetMapping("/search")
-    public List<TourResponse> searchTours(@RequestParam(required = false) String q) {
-        log.debug("GET /api/tours/search?q={}", q);
-        return tourService.searchTours(q);
+    public List<TourResponse> searchTours(@RequestParam(required = false) String q,
+                                          HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        log.debug("GET /api/tours/search?q={} - userId={}", q, userId);
+        return tourService.searchTours(q, userId); // Service-Methode anpassen
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TourResponse> getTourById(@PathVariable Long id) {
-        log.debug("GET /api/tours/{}", id);
-        return tourService.getTourById(id)
+    public ResponseEntity<TourResponse> getTourById(@PathVariable Long id,
+                                                    HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        log.debug("GET /api/tours/{} - userId={}", id, userId);
+        return tourService.getTourByIdAndUser(id, userId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<?> createTour(@RequestBody Tour tour) {
-        log.info("POST /api/tours - Name: {}", tour.getName());
+    public ResponseEntity<?> createTour(@RequestBody Tour tour, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        log.info("POST /api/tours - userId={}, Name: {}", userId, tour.getName());
         try {
+            tour.setUserId(userId);
             Tour created = tourService.createTour(tour);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
@@ -118,10 +126,12 @@ public class TourController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateTour(@PathVariable Long id, @RequestBody Tour tour) {
-        log.info("PUT /api/tours/{}", id);
+    public ResponseEntity<?> updateTour(@PathVariable Long id, @RequestBody Tour tour,
+                                        HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        log.info("PUT /api/tours/{} - userId={}", id, userId);
         try {
-            return tourService.updateTour(id, tour)
+            return tourService.updateTourForUser(id, tour, userId)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (IllegalArgumentException e) {
@@ -131,9 +141,10 @@ public class TourController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTour(@PathVariable Long id) {
-        log.info("DELETE /api/tours/{}", id);
-        if (tourService.deleteTour(id)) {
+    public ResponseEntity<Void> deleteTour(@PathVariable Long id, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        log.info("DELETE /api/tours/{} - userId={}", id, userId);
+        if (tourService.deleteTourForUser(id, userId)) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
