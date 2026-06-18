@@ -65,13 +65,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import tourplanner.backend.dto.TourDataExport;
 import tourplanner.backend.dto.TourResponse;
 import tourplanner.backend.persistence.entity.Tour;
 import tourplanner.backend.service.TourService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tours")
@@ -99,6 +102,25 @@ public class TourController {
         Long userId = (Long) request.getAttribute("userId");
         log.debug("GET /api/tours/search?q={} - userId={}", q, userId);
         return tourService.searchTours(q, userId); // Service-Methode anpassen
+    }
+
+    @GetMapping(value = "/export", produces = MediaType.APPLICATION_JSON_VALUE)
+    public TourDataExport exportTours(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        log.info("GET /api/tours/export - userId={}", userId);
+        return tourService.exportTourData(userId);
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> importTours(@RequestBody TourDataExport data, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        log.info("POST /api/tours/import - userId={}", userId);
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(tourService.importTourData(data, userId));
+        } catch (IllegalArgumentException e) {
+            log.warn("Tour import fehlgeschlagen: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @GetMapping("/{id}")
