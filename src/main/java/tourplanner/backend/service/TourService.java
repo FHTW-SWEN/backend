@@ -43,6 +43,7 @@ package tourplanner.backend.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
+import tourplanner.backend.dto.TourDataExport;
 import tourplanner.backend.dto.TourResponse;
 import tourplanner.backend.dto.ors.RouteInfo;
 import tourplanner.backend.persistence.entity.Tour;
@@ -162,7 +163,101 @@ public class TourService {
         }).orElse(false);
     }
 
+    public TourDataExport exportTourData(Long userId) {
+        List<TourDataExport.ExportedTour> tours = tourRepository.findByUserId(userId).stream()
+                .map(tour -> new TourDataExport.ExportedTour(
+                        tour.getName(),
+                        tour.getDescription(),
+                        tour.getFrom(),
+                        tour.getTo(),
+                        tour.getTransportType(),
+                        tour.getDistance(),
+                        tour.getEstimatedTime(),
+                        tour.getRouteCoordinates(),
+                        tour.getImageUrl(),
+                        tourLogRepository.findByTourId(tour.getId()).stream()
+                                .map(log -> new TourDataExport.ExportedTourLog(
+                                        log.getDateTime(),
+                                        log.getComment(),
+                                        log.getDifficulty(),
+                                        log.getTotalDistance(),
+                                        log.getTotalTime(),
+                                        log.getRating()
+                                ))
+                                .toList()
+                ))
+                .toList();
+        return new TourDataExport(tours);
+    }
+
+    public TourDataExport.ImportResult importTourData(TourDataExport data, Long userId) {
+        if (data == null || data.tours() == null) {
+            throw new IllegalArgumentException("Import data must contain tours");
+        }
+
+        int importedTours = 0;
+        int importedLogs = 0;
+        for (TourDataExport.ExportedTour exportedTour : data.tours()) {
+            validateImportedTour(exportedTour);
+
+            Tour tour = new Tour();
+            tour.setUserId(userId);
+            tour.setName(exportedTour.name());
+            tour.setDescription(exportedTour.description());
+            tour.setFrom(exportedTour.from());
+            tour.setTo(exportedTour.to());
+            tour.setTransportType(exportedTour.transportType());
+            tour.setDistance(exportedTour.distance());
+            tour.setEstimatedTime(exportedTour.estimatedTime());
+            tour.setRouteCoordinates(exportedTour.routeCoordinates());
+            tour.setImageUrl(exportedTour.imageUrl());
+
+            Tour savedTour = tourRepository.save(tour);
+            importedTours++;
+
+            if (exportedTour.logs() == null) {
+                continue;
+            }
+            for (TourDataExport.ExportedTourLog exportedLog : exportedTour.logs()) {
+                TourLog logEntry = new TourLog();
+                logEntry.setTourId(savedTour.getId());
+                logEntry.setDateTime(exportedLog.dateTime());
+                logEntry.setComment(exportedLog.comment());
+                logEntry.setDifficulty(exportedLog.difficulty());
+                logEntry.setTotalDistance(exportedLog.totalDistance());
+                logEntry.setTotalTime(exportedLog.totalTime());
+                logEntry.setRating(exportedLog.rating());
+                tourLogRepository.save(logEntry);
+                importedLogs++;
+            }
+        }
+
+        return new TourDataExport.ImportResult(importedTours, importedLogs);
+    }
+
     // --- Helper ---
+
+    private void validateImportedTour(TourDataExport.ExportedTour tour) {
+        if (tour == null) {
+            throw new IllegalArgumentException("Imported tour must not be null");
+        }
+        if (isBlank(tour.name())) {
+            throw new IllegalArgumentException("Imported tour name is required");
+        }
+        if (isBlank(tour.from())) {
+            throw new IllegalArgumentException("Imported tour start location is required");
+        }
+        if (isBlank(tour.to())) {
+            throw new IllegalArgumentException("Imported tour destination is required");
+        }
+        if (isBlank(tour.transportType())) {
+            throw new IllegalArgumentException("Imported tour transport type is required");
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
 
     private TourResponse toResponse(Tour tour) {
         return toResponse(tour, tourLogRepository.findByTourId(tour.getId()));
