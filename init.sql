@@ -77,3 +77,20 @@ CREATE INDEX IF NOT EXISTS idx_tours_fts ON tours
 -- Full-text search index on tour_logs (comment)
 CREATE INDEX IF NOT EXISTS idx_tour_logs_fts ON tour_logs
     USING GIN (to_tsvector('english', coalesce(comment,'')));
+
+-- -------------------------------------------------------------
+-- 5. TOUR PHOTOS
+--    User-uploaded photo collection per tour
+--    Multiple photos per tour (many-to-one), cascade delete with tour
+-- -------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tour_photos (
+                                           id              BIGSERIAL       PRIMARY KEY,
+                                           tour_id         BIGINT          NOT NULL REFERENCES tours(id) ON DELETE CASCADE,
+                                           file_name       VARCHAR(255)    NOT NULL,
+                                           content_type    VARCHAR(100)    NOT NULL,
+                                           data            BYTEA           NOT NULL,
+                                           caption         TEXT,
+                                           uploaded_at     TIMESTAMP       NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_tour_photos_tour_id ON tour_photos(tour_id);
