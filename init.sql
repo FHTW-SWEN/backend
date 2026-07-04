@@ -15,9 +15,10 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO tourplanner;
 CREATE TABLE IF NOT EXISTS users (
                                      id            BIGSERIAL       PRIMARY KEY,
                                      username      VARCHAR(100)    NOT NULL UNIQUE,
-    password_hash VARCHAR(255)    NOT NULL,           -- store BCrypt hash, never plaintext
-    created_at    TIMESTAMP       NOT NULL DEFAULT NOW()
-    );
+                                     email         VARCHAR(255)    NOT NULL UNIQUE,
+                                     password_hash VARCHAR(255)    NOT NULL,           -- store BCrypt hash, never plaintext
+                                     created_at    TIMESTAMP       NOT NULL DEFAULT NOW()
+);
 
 -- -------------------------------------------------------------
 -- 2. TOURS

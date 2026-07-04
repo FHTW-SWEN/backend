@@ -41,7 +41,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        // ... rest bleibt gleich
 
         String authHeader = request.getHeader("Authorization");
 

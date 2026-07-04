@@ -19,11 +19,12 @@ public class AuthController {
     }
 
     record AuthRequest(String username, String password) {}
+    record RegisterRequest(String username, String email, String password, String confirmPassword) {}
     record LoginResponse(String token, Long userId, String username) {}
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody AuthRequest request) {
-        var result = authService.register(request.username(), request.password());
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        var result = authService.register(request.username(), request.email(), request.password(), request.confirmPassword());
         if (!result.success()) {
             return ResponseEntity.badRequest().body(Map.of("message", result.message()));
         }
