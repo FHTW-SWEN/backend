@@ -18,10 +18,14 @@ public interface TourLogRepository extends JpaRepository<TourLog, Long> {
     @Query(value = """
             select distinct l.tour_id from tour_logs l
             where l.tour_id in (:tourIds)
-              and (
-                lower(coalesce(l.date_time, '')) like lower(concat('%', :query, '%'))
-                or lower(coalesce(l.comment, '')) like lower(concat('%', :query, '%'))
-              )
+              and to_tsvector('simple', concat_ws(' ',
+                    coalesce(l.date_time, ''),
+                    coalesce(l.comment, ''),
+                    coalesce(cast(l.difficulty as text), ''),
+                    coalesce(cast(l.total_distance as text), ''),
+                    coalesce(cast(l.total_time as text), ''),
+                    coalesce(cast(l.rating as text), '')
+                  )) @@ websearch_to_tsquery('simple', :query)
             """, nativeQuery = true)
     List<Long> findMatchingTourIds(@Param("tourIds") Collection<Long> tourIds, @Param("query") String query);
 }

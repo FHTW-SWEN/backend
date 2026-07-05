@@ -17,13 +17,15 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
     @Query(value = """
             select * from tours t
             where t.user_id = :userId
-              and (
-                lower(coalesce(t.name, '')) like lower(concat('%', :query, '%'))
-                or lower(coalesce(t.description, '')) like lower(concat('%', :query, '%'))
-                or lower(coalesce(t.from_location, '')) like lower(concat('%', :query, '%'))
-                or lower(coalesce(t.to_location, '')) like lower(concat('%', :query, '%'))
-                or lower(coalesce(t.transport_type, '')) like lower(concat('%', :query, '%'))
-              )
+              and to_tsvector('simple', concat_ws(' ',
+                    coalesce(t.name, ''),
+                    coalesce(t.description, ''),
+                    coalesce(t.from_location, ''),
+                    coalesce(t.to_location, ''),
+                    coalesce(t.transport_type, ''),
+                    coalesce(cast(t.distance as text), ''),
+                    coalesce(cast(t.estimated_time as text), '')
+                  )) @@ websearch_to_tsquery('simple', :query)
             """, nativeQuery = true)
     List<Tour> searchPersistedFields(@Param("userId") Long userId, @Param("query") String query);
 }
