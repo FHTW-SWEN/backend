@@ -2,9 +2,11 @@ package tourplanner.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import tourplanner.backend.persistence.entity.TourLog;
+import tourplanner.backend.service.JwtService;
 import tourplanner.backend.service.TourLogService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TourLogController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class TourLogControllerTest {
 
     @Autowired
@@ -30,6 +33,9 @@ class TourLogControllerTest {
 
     @MockitoBean
     private TourLogService tourLogService;
+
+    @MockitoBean
+    private JwtService jwtService;
 
     private TourLog sampleTourLog() {
         TourLog tourLog = new TourLog();
