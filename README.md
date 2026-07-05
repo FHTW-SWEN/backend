@@ -2,20 +2,21 @@
 
 ## Local setup
 
-The backend is prepared for PostgreSQL and reads database settings from environment variables.
 
-Default values:
-
-- `DB_URL=jdbc:postgresql://localhost:5432/tourplanner`
-- `DB_USERNAME=tourplanner`
-- `DB_PASSWORD=tourplanner`
-- `DDL_AUTO=update`
-
-Example run:
+### 1. Start PostgreSQL
 
 ```bash
-DB_URL=jdbc:postgresql://localhost:5432/tourplanner \
-DB_USERNAME=tourplanner \
-DB_PASSWORD=tourplanner \
+docker compose up -d
+```
+
+### 2. Run the backend
+
+```bash
 ./mvnw spring-boot:run
+```
+
+### 3. Stop PostgreSQL
+
+```bash
+docker compose down
 ```
