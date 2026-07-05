@@ -21,13 +21,13 @@ public class RouteService {
     }
 
     public RouteInfo calculateRoute(String from, String to, String transportType) {
-        log.info("Berechne Route: {} -> {}, Transport: {}", from, to, transportType);
+        log.info("Calculate the Route: {} -> {}, Transport: {}", from, to, transportType);
 
         double[] fromCoords = orsClient.geocode(from);
         double[] toCoords = orsClient.geocode(to);
 
-        if (fromCoords == null) throw new IllegalArgumentException("Startort nicht gefunden: " + from);
-        if (toCoords == null) throw new IllegalArgumentException("Zielort nicht gefunden: " + to);
+        if (fromCoords == null) throw new IllegalArgumentException("Starting location not found: " + from);
+        if (toCoords == null) throw new IllegalArgumentException("Destination not found: " + to);
 
         String profile = toOrsProfile(transportType);
         DirectionsResponse directions = orsClient.getDirections(fromCoords, toCoords, profile);
@@ -40,7 +40,7 @@ public class RouteService {
         // GeoJSON: features[0].geometry.coordinates = [[lng,lat], ...]
         String routeCoordinatesJson = buildCoordinatesJson(feature.getGeometry().getCoordinates());
 
-        log.info("Route berechnet: {}km, {}min", distanceKm, estimatedTimeMinutes);
+        log.info("Route calculated: {}km, {}min", distanceKm, estimatedTimeMinutes);
         return new RouteInfo(distanceKm, estimatedTimeMinutes, routeCoordinatesJson);
     }
 

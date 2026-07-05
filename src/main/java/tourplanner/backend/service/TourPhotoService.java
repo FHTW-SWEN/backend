@@ -34,7 +34,7 @@ public class TourPhotoService {
 
     public List<TourPhotoResponse> getPhotosForTour(Long tourId, Long userId) {
         assertTourBelongsToUser(tourId, userId);
-        log.debug("Lade Fotos für tourId={}", tourId);
+        log.debug("Load Images for tourId={}", tourId);
         return tourPhotoRepository.findByTourIdOrderByUploadedAtDesc(tourId).stream()
                 .map(this::toResponse)
                 .toList();
@@ -54,11 +54,11 @@ public class TourPhotoService {
                     LocalDateTime.now()
             );
             TourPhoto saved = tourPhotoRepository.save(photo);
-            log.info("Foto hochgeladen: tourId={}, photoId={}, size={} bytes", tourId, saved.getId(), file.getSize());
+            log.info("Photo uploaded: tourId={}, photoId={}, size={} bytes", tourId, saved.getId(), file.getSize());
             return toResponse(saved);
         } catch (IOException e) {
-            log.error("Foto konnte nicht gelesen werden: {}", e.getMessage());
-            throw new IllegalArgumentException("Datei konnte nicht verarbeitet werden.");
+            log.error("The photo could not be read: {}", e.getMessage());
+            throw new IllegalArgumentException("The file could not be processed.");
         }
     }
 
@@ -68,7 +68,7 @@ public class TourPhotoService {
                 .filter(photo -> photo.getTourId().equals(tourId))
                 .map(photo -> {
                     tourPhotoRepository.delete(photo);
-                    log.info("Foto gelöscht: tourId={}, photoId={}", tourId, photoId);
+                    log.info("Photo is deleted: tourId={}, photoId={}", tourId, photoId);
                     return true;
                 })
                 .orElse(false);
@@ -76,18 +76,18 @@ public class TourPhotoService {
 
     private void assertTourBelongsToUser(Long tourId, Long userId) {
         tourRepository.findByIdAndUserId(tourId, userId)
-                .orElseThrow(() -> new IllegalArgumentException("Tour nicht gefunden oder kein Zugriff."));
+                .orElseThrow(() -> new IllegalArgumentException("Tour not found or no access."));
     }
 
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Es wurde keine Datei übermittelt.");
+            throw new IllegalArgumentException("No file was uploaded.");
         }
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("Datei ist zu groß (max. 8 MB).");
+            throw new IllegalArgumentException("The file is too large (max. 8 MB).");
         }
         if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new IllegalArgumentException("Nur JPEG, PNG, WEBP oder GIF erlaubt.");
+            throw new IllegalArgumentException("Just JPEG, PNG, WEBP or GIF allowed.");
         }
     }
 

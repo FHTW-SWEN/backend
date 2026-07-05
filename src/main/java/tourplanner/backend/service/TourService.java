@@ -34,14 +34,14 @@ public class TourService {
     }
 
     public List<TourResponse> getAllToursByUser(Long userId) {
-        log.debug("Lade alle Tours für userId={}", userId);
+        log.debug("Load all tours for userId={}", userId);
         return tourRepository.findByUserId(userId).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     public Optional<TourResponse> getTourByIdAndUser(Long id, Long userId) {
-        log.debug("Suche Tour id={} für userId={}", id, userId);
+        log.debug("Search Tour id={} for userId={}", id, userId);
         return tourRepository.findByIdAndUserId(id, userId).map(this::toResponse);
     }
 
@@ -68,11 +68,10 @@ public class TourService {
     }
 
     /**
-     * Erstellt eine neue Tour.
-     * ORS wird aufgerufen um distance, estimatedTime und routeCoordinates zu befüllen.
+     * ORS is called to populate the `distance`, `estimatedTime`, and `routeCoordinates` fields.
      */
     public Tour createTour(Tour tour) {
-        log.info("Erstelle neue Tour: {} ({} -> {}) für userId={}",
+        log.info("Create a new Tour: {} ({} -> {}) for userId={}",
                 tour.getName(), tour.getFrom(), tour.getTo(), tour.getUserId());
 
         tour.setId(null);
@@ -85,16 +84,16 @@ public class TourService {
         tour.setRouteCoordinates(routeInfo.getRouteCoordinatesJson());
 
         Tour saved = tourRepository.save(tour);
-        log.info("Tour gespeichert: id={}, {}km, {}min", saved.getId(), saved.getDistance(), saved.getEstimatedTime());
+        log.info("Tour saved: id={}, {}km, {}min", saved.getId(), saved.getDistance(), saved.getEstimatedTime());
         return saved;
     }
 
     /**
-     * Aktualisiert eine Tour — nur wenn sie dem User gehört.
-     * ORS wird erneut aufgerufen falls from/to/transportType geändert wurden.
+     * Updates a Tour — if it bellows the User.
+     * ORS is called again if from, to, or transportType have been changed.
      */
     public Optional<Tour> updateTourForUser(Long id, Tour updated, Long userId) {
-        log.info("Aktualisiere Tour id={} für userId={}", id, userId);
+        log.info("Updated Tour id={} for userId={}", id, userId);
 
         return tourRepository.findByIdAndUserId(id, userId).map(existing -> {
             boolean routeChanged = !existing.getFrom().equals(updated.getFrom())
@@ -109,7 +108,7 @@ public class TourService {
             existing.setImageUrl(updated.getImageUrl());
 
             if (routeChanged) {
-                log.info("Route geändert, rufe ORS erneut auf");
+                log.info("Route changed; call ORS again");
                 RouteInfo routeInfo = routeService.calculateRoute(
                         updated.getFrom(), updated.getTo(), updated.getTransportType()
                 );
@@ -123,7 +122,7 @@ public class TourService {
     }
 
     public boolean deleteTourForUser(Long id, Long userId) {
-        log.info("Lösche Tour id={} für userId={}", id, userId);
+        log.info("Delete Tour id={} for userId={}", id, userId);
         return tourRepository.findByIdAndUserId(id, userId).map(tour -> {
             tourRepository.delete(tour);
             return true;

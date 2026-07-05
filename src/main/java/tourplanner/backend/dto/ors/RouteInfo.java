@@ -1,21 +1,18 @@
 package tourplanner.backend.dto.ors;
 
 /**
- * Enthält das Ergebnis eines ORS-Routenaufrufs.
- * Wird vom RouteService zurückgegeben und im TourService in die Tour gespeichert.
+ * Contains the result of an ORS route call.
+ * Returned by RouteService and saved to the tour in TourService.
  */
 public class RouteInfo {
 
-    /** Distanz in Kilometern (gerundet). */
     private final double distanceKm;
-
-    /** Geschätzte Zeit in Minuten (gerundet). */
     private final int estimatedTimeMinutes;
 
     /**
-     * Route-Koordinaten als JSON-String im Format:
+     * Route-Coordinates as JSON-String in Format:
      * [[lat, lng], [lat, lng], ...]
-     * Wird direkt in der DB gespeichert und ans Frontend geschickt.
+     * It is stored directly in the database and sent to the front end.
      */
     private final String routeCoordinatesJson;
 

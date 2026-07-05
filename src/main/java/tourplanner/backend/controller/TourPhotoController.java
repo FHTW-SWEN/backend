@@ -50,7 +50,7 @@ public class TourPhotoController {
             TourPhotoResponse created = tourPhotoService.uploadPhoto(tourId, userId, file, caption);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
-            log.warn("Foto-Upload fehlgeschlagen: {}", e.getMessage());
+            log.warn("Foto-Upload failed: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }

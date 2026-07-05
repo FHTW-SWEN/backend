@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 /**
- * Mapped die GeoJSON Response von ORS /v2/directions/{profile}/geojson
+ * Mapped the GeoJSON Response from ORS /v2/directions/{profile}/geojson
  *
- * Echte ORS Response Struktur:
+ * ORS Response Structure:
  * {
  *   "type": "FeatureCollection",
  *   "features": [{
@@ -38,7 +38,7 @@ public class DirectionsResponse {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Geometry {
-        // ORS gibt [longitude, latitude] zurück
+        // ORS returns [longitude, latitude]
         private List<List<Double>> coordinates;
 
         public List<List<Double>> getCoordinates() { return coordinates; }
@@ -55,9 +55,9 @@ public class DirectionsResponse {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Summary {
-        // Distanz in Metern
+        // Distance in meters
         private double distance;
-        // Dauer in Sekunden
+        // Duration in sec
         private double duration;
 
         public double getDistance() { return distance; }
