@@ -14,6 +14,8 @@ import tourplanner.backend.persistence.repository.TourRepository;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class TourService {
@@ -49,14 +51,19 @@ public class TourService {
             return getAllToursByUser(userId);
         }
 
-        return tourRepository.findByUserId(userId).stream()
-                .map(tour -> {
-                    List<TourLog> logs = tourLogRepository.findByTourId(tour.getId());
-                    TourResponse response = toResponse(tour, logs);
-                    return new SearchCandidate(response, buildSearchText(response, logs));
-                })
-                .filter(candidate -> candidate.searchText().contains(normalizedQuery))
-                .map(SearchCandidate::tour)
+        List<Tour> userTours = tourRepository.findByUserId(userId);
+        Set<Long> persistedMatches = tourRepository.searchPersistedFields(userId, normalizedQuery).stream()
+                .map(Tour::getId)
+                .collect(Collectors.toSet());
+
+        List<Long> tourIds = userTours.stream().map(Tour::getId).toList();
+        if (!tourIds.isEmpty()) {
+            persistedMatches.addAll(tourLogRepository.findMatchingTourIds(tourIds, normalizedQuery));
+        }
+
+        return userTours.stream()
+                .map(this::toResponse)
+                .filter(tour -> persistedMatches.contains(tour.getId()) || matchesComputedAttributes(tour, normalizedQuery))
                 .toList();
     }
 
@@ -267,38 +274,13 @@ public class TourService {
         return 1;
     }
 
-    private String buildSearchText(TourResponse tour, List<TourLog> logs) {
-        StringBuilder text = new StringBuilder();
-        append(text, tour.getName());
-        append(text, tour.getDescription());
-        append(text, tour.getFrom());
-        append(text, tour.getTo());
-        append(text, tour.getTransportType());
-        append(text, tour.getDistance());
-        append(text, tour.getEstimatedTime());
-        append(text, tour.getRouteCoordinates());
-        append(text, tour.getImageUrl());
-        append(text, "popularity:" + tour.getPopularity());
-        append(text, "childfriendliness:" + tour.getChildFriendliness());
-
-        for (TourLog l : logs) {
-            append(text, l.getDateTime());
-            append(text, l.getComment());
-            append(text, l.getDifficulty());
-            append(text, l.getTotalDistance());
-            append(text, l.getTotalTime());
-            append(text, l.getRating());
-        }
-        return normalize(text.toString());
-    }
-
-    private void append(StringBuilder text, Object value) {
-        if (value != null) text.append(' ').append(value);
+    private boolean matchesComputedAttributes(TourResponse tour, String normalizedQuery) {
+        return normalize("popularity:" + tour.getPopularity()).contains(normalizedQuery)
+                || normalize("childfriendliness:" + tour.getChildFriendliness()).contains(normalizedQuery);
     }
 
     private String normalize(String value) {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
     }
 
-    private record SearchCandidate(TourResponse tour, String searchText) {}
 }
