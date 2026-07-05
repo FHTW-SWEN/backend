@@ -12,7 +12,6 @@ public class TourResponse {
     private final Double distance;
     private final Integer estimatedTime;
     private final String routeCoordinates;
-    private final String imageUrl;
     private final int popularity;
     private final int childFriendliness;
 
@@ -26,7 +25,6 @@ public class TourResponse {
         this.distance = tour.getDistance();
         this.estimatedTime = tour.getEstimatedTime();
         this.routeCoordinates = tour.getRouteCoordinates();
-        this.imageUrl = tour.getImageUrl();
         this.popularity = popularity;
         this.childFriendliness = childFriendliness;
     }
@@ -40,7 +38,6 @@ public class TourResponse {
     public Double getDistance() { return distance; }
     public Integer getEstimatedTime() { return estimatedTime; }
     public String getRouteCoordinates() { return routeCoordinates; }
-    public String getImageUrl() { return imageUrl; }
     public int getPopularity() { return popularity; }
     public int getChildFriendliness() { return childFriendliness; }
 }

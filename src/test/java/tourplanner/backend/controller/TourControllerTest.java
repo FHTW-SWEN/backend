@@ -102,7 +102,6 @@ class TourControllerTest {
                         295.5,
                         1200,
                         "[[48.2,16.3]]",
-                        "/images/tour.jpg",
                         List.of()
                 )
         ));

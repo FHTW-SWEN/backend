@@ -106,7 +106,6 @@ public class TourService {
             existing.setFrom(updated.getFrom());
             existing.setTo(updated.getTo());
             existing.setTransportType(updated.getTransportType());
-            existing.setImageUrl(updated.getImageUrl());
 
             if (routeChanged) {
                 log.info("Route geändert, rufe ORS erneut auf");
@@ -141,7 +140,6 @@ public class TourService {
                         tour.getDistance(),
                         tour.getEstimatedTime(),
                         tour.getRouteCoordinates(),
-                        tour.getImageUrl(),
                         tourLogRepository.findByTourId(tour.getId()).stream()
                                 .map(log -> new TourDataExport.ExportedTourLog(
                                         log.getDateTime(),
@@ -177,7 +175,6 @@ public class TourService {
             tour.setDistance(exportedTour.distance());
             tour.setEstimatedTime(exportedTour.estimatedTime());
             tour.setRouteCoordinates(exportedTour.routeCoordinates());
-            tour.setImageUrl(exportedTour.imageUrl());
 
             Tour savedTour = tourRepository.save(tour);
             importedTours++;
