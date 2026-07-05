@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -154,6 +155,24 @@ class TourServiceTest {
 
         assertEquals(1, results.size());
         assertEquals(7, results.get(0).getPopularity());
+    }
+
+    @Test
+    void searchTours_matchesZeroPopularityWithoutPersistedSearch() {
+        Tour matchingTour = sampleTour(1L);
+        Tour otherTour = sampleTour(2L);
+        when(tourRepository.findByUserId(USER_ID)).thenReturn(List.of(matchingTour, otherTour));
+        when(tourLogRepository.countByTourId(1L)).thenReturn(0L);
+        when(tourLogRepository.countByTourId(2L)).thenReturn(3L);
+        when(tourLogRepository.findByTourId(1L)).thenReturn(List.of());
+        when(tourLogRepository.findByTourId(2L)).thenReturn(List.of());
+
+        List<TourResponse> results = tourService.searchTours("popularity:0", USER_ID);
+
+        assertEquals(1, results.size());
+        assertEquals(1L, results.get(0).getId());
+        verify(tourRepository, never()).searchPersistedFields(USER_ID, "popularity:0");
+        verify(tourLogRepository, never()).findMatchingTourIds(List.of(1L, 2L), "popularity:0");
     }
 
     @Test

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,13 +53,17 @@ public class TourService {
         }
 
         List<Tour> userTours = tourRepository.findByUserId(userId);
-        Set<Long> persistedMatches = tourRepository.searchPersistedFields(userId, normalizedQuery).stream()
-                .map(Tour::getId)
-                .collect(Collectors.toSet());
+        Set<Long> persistedMatches = new HashSet<>();
 
-        List<Long> tourIds = userTours.stream().map(Tour::getId).toList();
-        if (!tourIds.isEmpty()) {
-            persistedMatches.addAll(tourLogRepository.findMatchingTourIds(tourIds, normalizedQuery));
+        if (!isComputedAttributeQuery(normalizedQuery)) {
+            persistedMatches.addAll(tourRepository.searchPersistedFields(userId, normalizedQuery).stream()
+                    .map(Tour::getId)
+                    .collect(Collectors.toSet()));
+
+            List<Long> tourIds = userTours.stream().map(Tour::getId).toList();
+            if (!tourIds.isEmpty()) {
+                persistedMatches.addAll(tourLogRepository.findMatchingTourIds(tourIds, normalizedQuery));
+            }
         }
 
         return userTours.stream()
@@ -273,6 +278,11 @@ public class TourService {
     private boolean matchesComputedAttributes(TourResponse tour, String normalizedQuery) {
         return normalize("popularity:" + tour.getPopularity()).contains(normalizedQuery)
                 || normalize("childfriendliness:" + tour.getChildFriendliness()).contains(normalizedQuery);
+    }
+
+    private boolean isComputedAttributeQuery(String normalizedQuery) {
+        return normalizedQuery.startsWith("popularity:")
+                || normalizedQuery.startsWith("childfriendliness:");
     }
 
     private String normalize(String value) {
