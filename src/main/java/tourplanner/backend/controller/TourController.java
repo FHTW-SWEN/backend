@@ -40,7 +40,7 @@ public class TourController {
                                           HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         log.debug("GET /api/tours/search?q={} - userId={}", q, userId);
-        return tourService.searchTours(q, userId); // Service-Methode anpassen
+        return tourService.searchTours(q, userId);
     }
 
     @GetMapping(value = "/export", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -57,7 +57,7 @@ public class TourController {
         try {
             return ResponseEntity.status(HttpStatus.CREATED).body(tourService.importTourData(data, userId));
         } catch (IllegalArgumentException e) {
-            log.warn("Tour import fehlgeschlagen: {}", e.getMessage());
+            log.warn("Tour import failed: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
@@ -81,7 +81,7 @@ public class TourController {
             Tour created = tourService.createTour(tour);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IllegalArgumentException e) {
-            log.warn("Tour konnte nicht erstellt werden: {}", e.getMessage());
+            log.warn("Tour could not created: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -96,7 +96,7 @@ public class TourController {
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (IllegalArgumentException e) {
-            log.warn("Tour konnte nicht aktualisiert werden: {}", e.getMessage());
+            log.warn("The tour could not be updated: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

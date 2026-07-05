@@ -9,7 +9,7 @@ public class TourPhotoResponse {
     private String fileName;
     private String caption;
     private LocalDateTime uploadedAt;
-    /** Bild als Data-URL (data:image/...;base64,...) — direkt in <img src> nutzbar. */
+    /** Image as Data-URL (data:image/...;base64,...) — directly can used in <img src>. */
     private String dataUrl;
 
     public TourPhotoResponse() {}

@@ -21,7 +21,7 @@ public class GeocodeResponse {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Geometry {
-        // ORS gibt [longitude, latitude] zurück
+
         private List<Double> coordinates;
 
         public List<Double> getCoordinates() { return coordinates; }

@@ -1,11 +1,3 @@
-/*package tourplanner.backend.persistence.entity;
-
-import jakarta.persistence.*;
-
-/**
- * JPA-Entity für eine Tour.
- * Wird von Hibernate automatisch in der PostgreSQL-Tabelle "tours" gespeichert.
- */
 package tourplanner.backend.persistence.entity;
 
 import jakarta.persistence.*;
@@ -36,18 +28,11 @@ public class Tour {
     @Column(name = "transport_type", nullable = false)
     private String transportType;
 
-    /** Distanz in Kilometern — wird von ORS befüllt, nicht vom User. */
     private Double distance;
 
-    /** Geschätzte Zeit in Minuten — wird von ORS befüllt, nicht vom User. */
     @Column(name = "estimated_time")
     private Integer estimatedTime;
 
-    /**
-     * Route-Koordinaten als JSON-String: [[lat,lng],[lat,lng],...]
-     * Wird von ORS geholt und direkt ans Frontend weitergegeben,
-     * damit Leaflet die echte Route zeichnen kann.
-     */
     @Column(name = "route_coordinates", columnDefinition = "TEXT")
     private String routeCoordinates;
 
