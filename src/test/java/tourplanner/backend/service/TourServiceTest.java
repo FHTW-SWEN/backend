@@ -106,6 +106,8 @@ class TourServiceTest {
         otherTour.setName("City Walk");
         otherTour.setTo("Graz");
         when(tourRepository.findByUserId(USER_ID)).thenReturn(List.of(matchingTour, otherTour));
+        when(tourRepository.searchPersistedFields(USER_ID, "salzburg")).thenReturn(List.of(matchingTour));
+        when(tourLogRepository.findMatchingTourIds(List.of(1L, 2L), "salzburg")).thenReturn(List.of());
         when(tourLogRepository.countByTourId(1L)).thenReturn(0L);
         when(tourLogRepository.countByTourId(2L)).thenReturn(0L);
         when(tourLogRepository.findByTourId(1L)).thenReturn(List.of());
@@ -122,6 +124,8 @@ class TourServiceTest {
         Tour matchingTour = sampleTour(1L);
         Tour otherTour = sampleTour(2L);
         when(tourRepository.findByUserId(USER_ID)).thenReturn(List.of(matchingTour, otherTour));
+        when(tourRepository.searchPersistedFields(USER_ID, "forest")).thenReturn(List.of());
+        when(tourLogRepository.findMatchingTourIds(List.of(1L, 2L), "forest")).thenReturn(List.of(1L));
         when(tourLogRepository.countByTourId(1L)).thenReturn(1L);
         when(tourLogRepository.countByTourId(2L)).thenReturn(0L);
         when(tourLogRepository.findByTourId(1L))
@@ -139,6 +143,8 @@ class TourServiceTest {
         Tour matchingTour = sampleTour(1L);
         Tour otherTour = sampleTour(2L);
         when(tourRepository.findByUserId(USER_ID)).thenReturn(List.of(matchingTour, otherTour));
+        when(tourRepository.searchPersistedFields(USER_ID, "popularity:7")).thenReturn(List.of());
+        when(tourLogRepository.findMatchingTourIds(List.of(1L, 2L), "popularity:7")).thenReturn(List.of());
         when(tourLogRepository.countByTourId(1L)).thenReturn(7L);
         when(tourLogRepository.countByTourId(2L)).thenReturn(0L);
         when(tourLogRepository.findByTourId(1L)).thenReturn(List.of());
