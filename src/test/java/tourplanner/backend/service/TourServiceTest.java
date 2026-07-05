@@ -202,7 +202,6 @@ class TourServiceTest {
                         12.0,
                         180,
                         "[[47.0,15.0]]",
-                        "/images/imported.jpg",
                         List.of(new TourDataExport.ExportedTourLog(
                                 "2026-06-18T12:00:00",
                                 "Imported log",

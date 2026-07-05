@@ -13,7 +13,6 @@ public record TourDataExport(List<ExportedTour> tours) {
             Double distance,
             Integer estimatedTime,
             String routeCoordinates,
-            String imageUrl,
             List<ExportedTourLog> logs
     ) {}
 

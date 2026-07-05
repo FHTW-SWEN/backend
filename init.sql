@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- 2. TOURS
 --    Required fields per spec:
 --      name, description, from, to, transport_type,
---      distance, estimated_time, image_url (filesystem path)
+--      distance, estimated_time
 --    Computed fields (popularity, child_friendliness) are
 --      derived at runtime – NOT stored here
 -- -------------------------------------------------------------
@@ -38,7 +38,6 @@ CREATE TABLE IF NOT EXISTS tours (
     transport_type  VARCHAR(50)     NOT NULL,
     distance        DOUBLE PRECISION,
     estimated_time  INTEGER,
-    image_url       VARCHAR(500),
     created_at      TIMESTAMP       NOT NULL DEFAULT NOW()
     );
 

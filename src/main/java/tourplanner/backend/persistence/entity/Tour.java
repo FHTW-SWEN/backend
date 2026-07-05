@@ -51,9 +51,6 @@ public class Tour {
     @Column(name = "route_coordinates", columnDefinition = "TEXT")
     private String routeCoordinates;
 
-    @Column(name = "image_url")
-    private String imageUrl;
-
     public Tour() {}
 
     public Long getId() { return id; }
@@ -86,6 +83,4 @@ public class Tour {
     public String getRouteCoordinates() { return routeCoordinates; }
     public void setRouteCoordinates(String routeCoordinates) { this.routeCoordinates = routeCoordinates; }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }
